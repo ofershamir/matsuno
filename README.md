@@ -15,10 +15,17 @@ Give examples
 ```
 
 ### Installing
+Installation
+-------------
 
-A step by step series of examples that tell you how to get a development env running
+Required dependencies:
 
-Say what the step will be
+- Python 3.4 to 3.7
+- numpy
+
+The package can be installed from ``pip``::
+
+    $ pip install pymaws
 
 ```
 Give the example
