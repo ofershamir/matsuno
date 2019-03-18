@@ -16,7 +16,7 @@ These instructions will get you a copy of the project up and running on your loc
 The package can be installed from ``pip``::
 
     $ pip install pymaws
-###Testing
+### Testing
 
 ```
 
@@ -28,12 +28,8 @@ And repeat
 ```
 until finished
 ```
-###Example
+### Example
 End with an example of getting some data out of the system or using it for a little demo
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
 
 
 ## Authors
