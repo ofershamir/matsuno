@@ -5,7 +5,10 @@ Created on Wed Mar 13 11:03:39 2019
 # make sure the low-level input is scaler and integer - Done.
 # for validation we need a simple estimation of the fields
 # need citation of the equations
-# validation of hermite polynomial
+# validation of hermite polynomial - Done :
+    # our_hermite_func(x, n) = scipy.special.eval_hermite(n, x) * prefactor(n)
+    # prefactor(n) = (2**n*n!*pi**0.5)**-0.5
+# what to do if someone puts degrees instead of radians ? docs ?
 @author: shlomi
 """
 Earth = {
@@ -51,17 +54,21 @@ def eval_omega(k, n, wave_type='Rossby', parameters=Earth):
     import numpy as np
     # make sure k and n are scalers:
     if not np.isscalar(n):
-        raise ValueError('n must be scalar')
+        raise TypeError('n must be scalar')
     if not np.isscalar(k):
-        raise ValueError('k must be scalar')
+        raise TypeError('k must be scalar')
     # make sure input is integer:
     if not isinstance(k, int):
-        print('k should be integer, i.e., ' + int(k))
+        raise TypeError('k should be integer, i.e., ' + int(k))
         k = int(k)
     if not isinstance(n, int):
-        print('n should be integer, i.e., ' + int(n))
+        raise TypeError('n should be integer, i.e., ' + int(n))
         k = int(k)
-
+    # check for k>=1 and n>=1
+    if k < 1:
+        raise ValueError('pymaws supports only k>=1 for now...')
+    if n < 1:
+        raise ValueError('pymaws supports only n>=1 for now...')
     # unpack dictionary into vars:
     OMEGA = parameters.get('angular_frequency', 'missing angular_frequency key\
                            from parameters dictionary...')
@@ -113,16 +120,14 @@ def eval_hermite_polynomial(x, n):
 
     Notes
     -----
-    This function supports k>=1 and n>=1 inputs only.
-    Special treatments are required for k=0 and n=-1,0/-.
 
     """
     import numpy as np
     # make sure n is integer and scaler:
     if not np.isscalar(n):
-        raise ValueError('n must be scalar')
+        raise TypeError('n must be scalar')
     if not isinstance(n, int):
-        print('n should be integer, i.e., ' + int(n))
+        raise TypeError('n should be integer, i.e., ' + int(n))
     # make sure x is an array(or scalar):
     x = np.asarray(x)
     # main evaluation:
@@ -148,15 +153,15 @@ def eval_meridional_velocity(lat, n, amp, EPSILON):
     lat : Float, array_like or scalar
           latitude(radians)
     n : Integer, scaler
-        polynomial degree for the Hermite polynomial evaluation.
+        wave-mode (dimensionless)
     amp : Float, scalar
           wave amplitude(m/sec)
     EPSILON: Float, scalar
             Lamb's parameter.
     Returns
     -------
-    psi_n : Float, array_like or scalar
-            Evaluation of the eigenfunction psi.
+    vel : Float, array_like or scalar
+          Evaluation of the meridional velocity.
 
     Notes
     -----
@@ -166,16 +171,16 @@ def eval_meridional_velocity(lat, n, amp, EPSILON):
     """
     import numpy as np
     if not np.isscalar(amp):
-        raise ValueError('amp must be scalar')
+        raise TypeError('amp must be scalar')
     # re-scale latitude
     y = EPSILON**0.25 * lat
 
     # Gaussian envelope
     ex = np.exp(-0.5 * y**2)
 
-    psi_n = amp * ex * eval_hermite_polynomial(y, n)
+    vel = amp * ex * eval_hermite_polynomial(y, n)
 
-    return psi_n
+    return vel
 
 
 def eval_field_amplitudes(lat, k, n, amp, field='phi', wave_type='Rossby',
@@ -189,7 +194,7 @@ def eval_field_amplitudes(lat, k, n, amp, field='phi', wave_type='Rossby',
           latitude(radians)
     k : Integer, scalar
     n : Integer, scaler
-        polynomial degree for the Hermite polynomial evaluation.
+        wave-mode (dimensionless)
     amp : Float, scalar
           wave amplitude(m/sec)
     field : str
@@ -208,9 +213,9 @@ def eval_field_amplitudes(lat, k, n, amp, field='phi', wave_type='Rossby',
         Defualt: Earth's parameters defined above
     Returns
     -------
-    Either u_hat, v_hat or p_hat : Float, array_like or scalar
-            Evaluation of the amplitudes for the zonal velocity,
-            or meridional velocity or the geopotential height respectivly.
+    Either u_hat(m/sec), v_hat(m/sec) or p_hat(m^2/sec^2) : Float, array_like
+    or scalar Evaluation of the amplitudes for the zonal velocity,
+    or meridional velocity or the geopotential height respectivly.
 
     Notes
     -----
@@ -274,7 +279,7 @@ def eval_field(lat, lon, time, k, n, amp, field='phi', wave_type='Rossby',
            conditions.
     k : Integer, scalar
     n : Integer, scaler
-        polynomial degree for the Hermite polynomial evaluation.
+        wave-mode (dimensionless)
     amp : Float, scalar
           wave amplitude(m/sec)
     field : str
@@ -294,8 +299,9 @@ def eval_field(lat, lon, time, k, n, amp, field='phi', wave_type='Rossby',
     Returns
     -------
     f : Float, 3D array (time, lon, lat)
-        Evaluation of the amplitudes for the zonal velocity,
-        or meridional velocity or the geopotential height respectivly.
+        Evaluation of the the zonal velocity(m/sec),
+        or meridional velocity(m/sec) or the geopotential height(m^2/sec^2)
+        respectivly.
 
     Notes
     -----
