@@ -22,6 +22,7 @@ Earth = {
 def eval_omega(k, n, wave_type='Rossby', parameters=Earth):
     """
     Evaluates the wave-frequency for a given wave number and wave mode.
+    For further details see eq. 2 in  https://doi.org/10.5194/gmd-2018-260
 
     Parameters
     ----------
@@ -58,12 +59,10 @@ def eval_omega(k, n, wave_type='Rossby', parameters=Earth):
     if not np.isscalar(k):
         raise TypeError('k must be scalar')
     # make sure input is integer:
-    if not isinstance(k, int):
-        raise TypeError('k should be integer, i.e., ' + int(k))
-        k = int(k)
-    if not isinstance(n, int):
-        raise TypeError('n should be integer, i.e., ' + int(n))
-        k = int(k)
+    if not isinstance(k, (int, np.integer)):
+        raise TypeError('k should be integer, i.e., ' + str(int(k)))
+    if not isinstance(n, (int, np.integer)):
+        raise TypeError('n should be integer, i.e., ' + str(int(n)))
     # check for k>=1 and n>=1
     if k < 1:
         raise ValueError('pymaws supports only k>=1 for now...')
@@ -79,18 +78,18 @@ def eval_omega(k, n, wave_type='Rossby', parameters=Earth):
                         from parameters dictionary...')
     H0 = parameters.get('layer_mean_depth', 'missing layer_mean_depth key\
                         from parameters dictionary...')
-    # cubic root estimation ?
+    # evaluate eq. 4 in https://doi.org/10.5194/gmd-2018-260:
     omegaj = np.zeros((1, 3))
     delta0 = 3. * (G * H0 * (k / A)**2 + 2. * OMEGA *
                    (G * H0)**0.5 / A * (2 * n + 1))
     delta4 = -54. * OMEGA * G * H0 * k / A**2
-    # estimate cubic root o
+
     for j in range(1, 4):
         deltaj = (delta4**2 - 4. * delta0**3 + 0. * 1j)**0.5
         deltaj = (0.5 * (delta4 + deltaj))**(1. / 3.)
         deltaj = deltaj * np.exp(2. * np.pi * 1j * j / 3.)
         omegaj[0, j - 1] = np.real(-1. / 3. * (deltaj + delta0 / deltaj))
-    # choose wave-type:
+    # choose wave-type(eq. 5 in https://doi.org/10.5194/gmd-2018-260):
     if wave_type == 'Rossby':
         omega = -np.min(np.abs(omegaj))
     elif wave_type == 'WIG':
@@ -104,7 +103,8 @@ def eval_omega(k, n, wave_type='Rossby', parameters=Earth):
 def eval_hermite_polynomial(x, n):
     """
     Evaluates the normalized Hermite polynomial of degree n at point/s x
-    using the three-term recurrence relation.
+    using the three-term recurrence relation. For further details see eq. 7 in
+    https://doi.org/10.5194/gmd-2018-260
 
     Parameters
     ----------
@@ -126,8 +126,8 @@ def eval_hermite_polynomial(x, n):
     # make sure n is integer and scaler:
     if not np.isscalar(n):
         raise TypeError('n must be scalar')
-    if not isinstance(n, int):
-        raise TypeError('n should be integer, i.e., ' + int(n))
+    if not isinstance(n, (int, np.integer)):
+        raise TypeError('n should be integer, i.e., ' + str(int(n)))
     # make sure x is an array(or scalar):
     x = np.asarray(x)
     # main evaluation:
@@ -143,21 +143,24 @@ def eval_hermite_polynomial(x, n):
     return H_n
 
 
-def eval_meridional_velocity(lat, n, amp, EPSILON):
+def eval_meridional_velocity(lat, Lamb, n=1, amp=1e-5):
     """
     Evaluates the meridional velocity amplitude at a given latitude point and
-    a given wave-amplitude.
+    a given wave-amplitude. Eq. 6a in  https://doi.org/10.5194/gmd-2018-260
 
     Parameters
     ----------
     lat : Float, array_like or scalar
           latitude(radians)
+    Lamb: Float, scalar
+          Lamb's parameter. ~ 2935 for Earth's parameters
     n : Integer, scaler
         wave-mode (dimensionless)
+        Default : 1
     amp : Float, scalar
           wave amplitude(m/sec)
-    EPSILON: Float, scalar
-            Lamb's parameter.
+          Default : 1e-5
+
     Returns
     -------
     vel : Float, array_like or scalar
@@ -173,7 +176,7 @@ def eval_meridional_velocity(lat, n, amp, EPSILON):
     if not np.isscalar(amp):
         raise TypeError('amp must be scalar')
     # re-scale latitude
-    y = EPSILON**0.25 * lat
+    y = Lamb**0.25 * lat
 
     # Gaussian envelope
     ex = np.exp(-0.5 * y**2)
@@ -183,8 +186,8 @@ def eval_meridional_velocity(lat, n, amp, EPSILON):
     return vel
 
 
-def eval_field_amplitudes(lat, k, n, amp, field='phi', wave_type='Rossby',
-                          parameters=Earth):
+def eval_field_amplitudes(lat, k=5, n=1, amp=1e-5, field='v',
+                          wave_type='Rossby', parameters=Earth):
     """
     Evaluates the latitude dependent amplitudes at a given latitude point.
 
@@ -193,14 +196,18 @@ def eval_field_amplitudes(lat, k, n, amp, field='phi', wave_type='Rossby',
     lat : Float, array_like or scalar
           latitude(radians)
     k : Integer, scalar
+        spherical wave-number (dimensionless)
+        Default : 5
     n : Integer, scaler
         wave-mode (dimensionless)
+        Default : 1
     amp : Float, scalar
           wave amplitude(m/sec)
+          Default : 1e-5
     field : str
             pick 'phi' for geopotential height,
             'u' for zonal velocity and 'v' for meridional velocity
-            Defualt : 'phi'
+            Defualt : 'v'
     wave_type: str
         choose Rossby waves or WIG waves or EIG waves.
         Defualt: Rossby
@@ -234,35 +241,38 @@ def eval_field_amplitudes(lat, k, n, amp, field='phi', wave_type='Rossby',
     H0 = parameters.get('layer_mean_depth', 'missing layer_mean_depth key\
                         from parameters dictionary...')
     # Lamb's parameter:
-    EPSILON = (2. * OMEGA * A)**2 / (G * H0)
+    Lamb = (2. * OMEGA * A)**2 / (G * H0)
     # evaluate wave frequency:
     omega = eval_omega(k, n, wave_type, parameters)
     # evaluate the meridional velocity amp first:
-    v_hat = eval_meridional_velocity(lat, n, amp)
+    v_hat = eval_meridional_velocity(lat, Lamb, n, amp)
     # evaluate functions for u and phi:
-    v_hat_plus_1 = eval_meridional_velocity(lat, n + 1, amp)
-    v_hat_minus_1 = eval_meridional_velocity(lat, n - 1, amp)
+    v_hat_plus_1 = eval_meridional_velocity(lat, Lamb, n + 1, amp)
+    v_hat_minus_1 = eval_meridional_velocity(lat, Lamb, n - 1, amp)
+    # Eq. 6a in https://doi.org/10.5194/gmd-2018-260
     if field == 'v':
         return v_hat
+    # Eq. 6b in https://doi.org/10.5194/gmd-2018-260
     elif field == 'u':
         u_hat = (- ((n + 1) / 2.0)**0.5 * (omega / (G * H0)**0.5 + k / A) * v_hat_plus_1 -
                  ((n) / 2.0)**0.5 * (omega / (G * H0)**0.5 - k / A) * v_hat_minus_1)
         # pre-factors
-        u_hat = G * H0 * EPSILON**0.25 / \
+        u_hat = G * H0 * Lamb**0.25 / \
             (1j * A * (omega**2 - G * H0 * (k / A)**2)) * u_hat
         return u_hat
+    # Eq. 6c in https://doi.org/10.5194/gmd-2018-260
     elif field == 'phi':
         p_hat = (- ((n + 1) / 2.0)**0.5 * (omega + (G * H0)**0.5 * k / A) * v_hat_plus_1
                  + ((n) / 2.0)**0.5 * (omega - (G * H0)**0.5 * k / A) * v_hat_minus_1)
-        p_hat = G * H0 * EPSILON**0.25 / \
+        p_hat = G * H0 * Lamb**0.25 / \
             (1j * A * (omega**2 - G * H0 * (k / A)**2)) * p_hat
         return p_hat
     else:
         raise KeyError('field must be u, v or phi')
 
 
-def eval_field(lat, lon, time, k, n, amp, field='phi', wave_type='Rossby',
-               parameters=Earth):
+def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
+               wave_type='Rossby', parameters=Earth):
     """
     Evaluates the analytic solutions of either the zonal or meridional velocity
     or the geopotential height on an on arbitrary lat x lon grids at times
@@ -278,10 +288,14 @@ def eval_field(lat, lon, time, k, n, amp, field='phi', wave_type='Rossby',
            time(sec), should be scalar and =0 if one wants only initial
            conditions.
     k : Integer, scalar
+        spherical wave-number (dimensionless)
+        Default : 5
     n : Integer, scaler
         wave-mode (dimensionless)
+        Default : 1
     amp : Float, scalar
           wave amplitude(m/sec)
+          Defualt : 1e-5
     field : str
             pick 'phi' for geopotential height,
             'u' for zonal velocity and v for meridional velocity
@@ -347,4 +361,5 @@ def eval_field(lat, lon, time, k, n, amp, field='phi', wave_type='Rossby',
     for t in range(nt):
         f[t, :, :] = np.real(
             np.outer(np.exp(1j * (k * lon - omega * time[t])), f_hat))
+    f = f.squeeze()
     return f
