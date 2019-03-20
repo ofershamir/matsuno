@@ -9,28 +9,30 @@ These instructions will get you a copy of the project up and running on your loc
 
 
 - Python 3.4 to 3.7
-- numpy
+- numpy  1.16
 
 
 
-The package can be installed from ``pip``::
+The package can be installed from ``pip``:
 
-    $ pip install pymaws
+  	$ pip install pymaws
+    
 ### Testing
+run python3 from the command line:
 
-```
-
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
+	$ python test_pymaws.py
+   
 ### Example
-End with an example of getting some data out of the system or using it for a little demo
+The command:
 
+	$ from pymaws import *
+imports the function eval_field that calculates the solution for a specific field and the dictionary Earth that contains various planetary parameters needed for the calculation.
+
+	$  {'angular_frequency': 7.29212e-05,
+	      'gravitational_acceleration': 9.80616,
+	      'mean_radius': 6371220.0,
+	      'layer_mean_depth': 30.0}
+if you want to use extra-solar parameters, you should create a new dictionary with the SAME keys as shown above and have eval_field call it using the parameters argument.
 
 ## Authors
 
