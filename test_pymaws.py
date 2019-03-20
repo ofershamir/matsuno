@@ -155,23 +155,56 @@ class Test_pymaws(unittest.TestCase):
         import numpy as np
         OMEGA = _unpack_parameters(Earth, 'angular_frequency')
         A = _unpack_parameters(Earth, 'mean_radius')
-        ns = np.random.randint(1, 51, 25)
-        ks = np.random.randint(1, 51, 25)
+        ns = np.arange(1, 11)
+        ks = np.random.randint(1, 51, 10)
         print('Using ' + str(len(ns)) + ' random n`s from ' + str(min(ns)) +
               ' to ' + str(max(ns)) + ':')
         print('Using ' + str(len(ks)) + ' random k`s from ' + str(min(ks)) +
               ' to ' + str(max(ks)) + ':')
-        lats = np.deg2rad(np.linspace(-90, 90))
+        lats = 20.0 * np.random.rand(10) - 10.0
+        thresh = 1e-6
         for k in ks:
             for n in ns:
                 for lat in lats:
-                    omega = _eval_omega(k, n, Earth)
-                    v_hat = _eval_field_amplitudes(lat, k, n, 'v', 'Rossby',
+                    omega = _eval_omega(k, n, Earth)['Rossby']
+                    v_hat = _eval_field_amplitudes(lat, k, n, 1, 'v', 'Rossby',
                                                    Earth)
-                    phi_hat = _eval_field_amplitudes(lat, k, n, 'phi',
+                    phi_hat = _eval_field_amplitudes(lat, k, n, 1, 'phi',
                                                      'Rossby', Earth)
-                    u_hat = _eval_field_amplitudes(lat, k, n, 'u', 'Rossby',
+                    u_hat = _eval_field_amplitudes(lat, k, n, 1, 'u', 'Rossby',
                                                    Earth)
-                    
+                    error = (-1j * omega * u_hat - 2 * OMEGA * np.sin(lat) *
+                             v_hat + 1j * k / (A * np.cos(lat)) * phi_hat)
+                    # print(np.real(error))
+                    self.assertLessEqual(abs(np.real(error)),
+                                         thresh, 'Error should be' +
+                                         ' smaller than ' + str(thresh))
+
+    def test_eval_field(self):
+        """Testing eval_field in pymaws"""
+        from pymaws import eval_field
+        from pymaws import Earth
+        from pymaws import _unpack_parameters
+        import numpy as np
+        thresh = 1e-10
+        OMEGA = _unpack_parameters(Earth, 'angular_frequency')
+        A = _unpack_parameters(Earth, 'mean_radius')
+        lat1 = np.deg2rad(15.0)
+        lon1 = np.deg2rad(1.0)
+        lon2 = np.deg2rad(2.0)
+        time1 = 1.0
+        time2 = 1.01
+        v1 = eval_field(lat1, lon1, time1, field='v')
+        u1 = eval_field(lat1, lon1, time1, field='u')
+        u2 = eval_field(lat1, lon1, time2, field='u')
+        phi1 = eval_field(lat1, lon1, time1, field='phi')
+        phi2 = eval_field(lat1, lon2, time1, field='phi')
+        error = (u2 - u1) / (time2 - time1) - 2 * OMEGA * np.sin(lat1) * \
+            v1 + 1 / (A * np.cos(lat1)) * (phi2 - phi1) / (lon2 - lon1)
+        self.assertLessEqual(abs(error),
+                             thresh, 'Error should be' +
+                             ' smaller than ' + str(thresh))
+
+
 if __name__ == '__main__':
     unittest.main()

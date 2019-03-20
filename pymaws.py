@@ -363,7 +363,10 @@ def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
     f = np.zeros((nt, ni, nj))
 
     # frequency
-    omega = _eval_omega(k, n, wave_type, parameters)
+    all_omegas = _eval_omega(k, n, parameters)
+    if wave_type not in all_omegas:
+        raise KeyError(wave_type + ' should be Rossby, EIG or WIG...')
+    omega = all_omegas[wave_type]
 
     # latitude-dependent amplitudes
     if field == 'phi':
