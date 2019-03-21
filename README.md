@@ -3,25 +3,25 @@ An analytical solutions set for planetary and inertia gravity waves equations ba
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+``pymaws`` includes one main function called ``eval_field`` and a dictionary named ``Earth`` containing various parameters needed for the field evaluation. For evaluating field on extra-solar planets see instructions below.
 
 ### Installation
 
+``pymaws`` has minimal requirements of:
 
 - Python 3.4 to 3.7
 - numpy  1.16
-
-
 
 The package can be installed from ``pip``:
 
   	$ pip install pymaws
     
 ### Testing
-run python3 from the command line:
+The testing procedure tests all the parts of ``pymaws`` and should not take more than a few seconds.
+To run the tests, use python3 from the command line:
 
 	$ python test_pymaws.py
-   
+  You should get ``OK`` in the last line.
 ### Example
 The command:
 
