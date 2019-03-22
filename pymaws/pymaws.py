@@ -2,13 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Mar 13 11:03:39 2019
-# make sure the low-level input is scaler and integer - Done.
-# for validation we need a simple estimation of the fields
-# need citation of the equations
-# validation of hermite polynomial - Done :
-    # our_hermite_func(x, n) = scipy.special.eval_hermite(n, x) * prefactor(n)
-    # prefactor(n) = (2**n*n!*pi**0.5)**-0.5
-# what to do if someone puts degrees instead of radians ? docs ?
 @author: shlomi
 """
 Earth = {
@@ -273,16 +266,18 @@ def _eval_field_amplitudes(lat, k=5, n=1, amp=1e-5, field='v',
         return v_hat
     # Eq. 6b in https://doi.org/10.5194/gmd-2018-260
     elif field == 'u':
-        u_hat = (- ((n + 1) / 2.0)**0.5 * (omega / (G * H0)**0.5 + k / A) * v_hat_plus_1 -
-                 ((n) / 2.0)**0.5 * (omega / (G * H0)**0.5 - k / A) * v_hat_minus_1)
+        u_hat = (- ((n + 1) / 2.0)**0.5 * (omega / (G * H0)**0.5 + k / A) *
+                 v_hat_plus_1 - ((n) / 2.0)**0.5 * (omega / (G * H0)**0.5 -
+                                                    k / A) * v_hat_minus_1)
         # pre-factors
         u_hat = G * H0 * Lamb**0.25 / \
             (1j * A * (omega**2 - G * H0 * (k / A)**2)) * u_hat
         return u_hat
     # Eq. 6c in https://doi.org/10.5194/gmd-2018-260
     elif field == 'phi':
-        p_hat = (- ((n + 1) / 2.0)**0.5 * (omega + (G * H0)**0.5 * k / A) * v_hat_plus_1
-                 + ((n) / 2.0)**0.5 * (omega - (G * H0)**0.5 * k / A) * v_hat_minus_1)
+        p_hat = (- ((n + 1) / 2.0)**0.5 * (omega + (G * H0)**0.5 * k / A) *
+                 v_hat_plus_1 + ((n) / 2.0)**0.5 * (omega - (G * H0)**0.5 *
+                                                    k / A) * v_hat_minus_1)
         p_hat = G * H0 * Lamb**0.25 / \
             (1j * A * (omega**2 - G * H0 * (k / A)**2)) * p_hat
         return p_hat

@@ -72,6 +72,7 @@ class Test_pymaws(unittest.TestCase):
                                  ' smaller than ' + str(thresh))
         print('_eval_hermite_polynomial test complete with threshold of ' +
               str(thresh))
+        print('')
 
     def test_omega(self):
         """Testing _eval_omega in pymaws vs. numpy.roots:
@@ -120,91 +121,156 @@ class Test_pymaws(unittest.TestCase):
                                      ' smaller than ' + str(thresh))
                 self.assertLessEqual(totest_sum, thresh, 'Sum of all 3 roots '
                                      + 'should be smaller than ' + str(thresh))
-        print('Test complete with threshold of ' + str(thresh))
+        print('_eval_omega test complete with threshold of ' + str(thresh))
+        print('')
 
     def test_v(self):
         """Testing _eval_meridional_velocity in pymaws using
-            np.polynomial.hermite.hermgauss:
+            np.trapz, basically testing for orthonormallity of the meridional
+            velocity functions:
            1)Compute the Lamb parameter for Earth.
-           2)"""
-        from numpy.polynomial.hermite import hermgauss
+           2)Assaign x to be latitude range from -80 to 80 in radians.
+           3)Sample an amplitude from 1e-15 to 1e15 uniformly.
+           4)Run _eval_meridional_velocity with n=10, x ,Lamb, amp
+           5)Run _eval_meridional_velocity with n=5, x ,Lamb, amp
+           6)The error is an integral of step 4 times step 5 times a scaling
+            constant.
+           7)The term that should equal one is the integral of step 4 times
+             step 4 (or step 5 times step 5) times the same scaling factor
+             from step 6."""
         from pymaws import _eval_meridional_velocity
         from pymaws import Earth
         from pymaws import _unpack_parameters
-        print('Testing eval_meridional_velocity: ')
+        import numpy as np
+        import random
+        print('Testing _eval_meridional_velocity: ')
         # unpack dictionary into vars:
         OMEGA = _unpack_parameters(Earth, 'angular_frequency')
         G = _unpack_parameters(Earth, 'gravitational_acceleration')
         A = _unpack_parameters(Earth, 'mean_radius')
         H0 = _unpack_parameters(Earth, 'layer_mean_depth')
         Lamb = (2. * OMEGA * A)**2 / (G * H0)
-        x, w = hermgauss(100)
-        amplitude = 1e-5
-        v_10 = _eval_meridional_velocity(x, Lamb, n=10, amp=amplitude)
-        v_5 = _eval_meridional_velocity(x, Lamb, n=5, amp=amplitude)
-        print(sum(v_10*v_5*w))
-        print(sum(v_10*v_10*w)/(amplitude**2/Lamb**0.25))
+        thresh = 1e-15
+        lats = np.deg2rad(np.linspace(-80., 80., 100))
+        print('Using ' + str(len(lats)) + ' lats from ' +
+              str(round(min(lats), 2)) + ' to ' +
+              str(round(max(lats), 2)) + ':')
+        amp = random.uniform(np.log(1e-15), np.log(1e15))
+        amp = np.exp(amp)
+        print('Using amplitude: {0:.2g}'.format(amp))
+        v_10 = _eval_meridional_velocity(lats, Lamb, n=10, amp=amp)
+        v_5 = _eval_meridional_velocity(lats, Lamb, n=5, amp=amp)
+        error = np.trapz(v_10 * v_5, lats) * Lamb**0.25 / (amp**2)
+        one = np.trapz(v_10 * v_10, lats) * Lamb**0.25 / (amp**2)
+        self.assertLessEqual(error, thresh, 'Error should be'
+                             + ' smaller than ' + str(thresh))
+        self.assertAlmostEqual(one, 1.0, 7)
+        print('_eval_meridional_velocity test complete with threshold of ' +
+              str(thresh))
+        print('')
 
     def test_eval_field_amplitudes(self):
-        """Testing _eval_field_amplitudes in pymaws using np.roots:
-           1)
+        """Testing _eval_field_amplitudes in pymaws:
+           1)Sample random n's and k's from 1-15 and from 1-50 respectively.
+           2)Sample 10 latitudes from -80 to 80 in radians.
+           3)Sample 1 radnom amplitude from 1e-15 to 1e15 uniformly.
+           4)For each wave_type and n and k, compute the omega using
+            _eval_omega and v_hat, u_hat, phi_hat
+            the error term is (-1j * omega * u_hat - 2 * OMEGA * lats * v_hat +
+                             1j * k / (A) * phi_hat) / amp
+           5)The final error term is sum(abs(np.real(error from step 4)))
         """
         from pymaws import _eval_field_amplitudes
         from pymaws import _eval_omega
         from pymaws import _unpack_parameters
         from pymaws import Earth
+        import random
         import numpy as np
+        print('Testing pymaws._eval_field_amplitudes: ')
         OMEGA = _unpack_parameters(Earth, 'angular_frequency')
         A = _unpack_parameters(Earth, 'mean_radius')
-        ns = np.arange(1, 11)
-        ks = np.random.randint(1, 51, 10)
+        # ns = np.arange(1, 11)
+        ns = np.random.randint(1, 16, 10)
+        ks = np.random.randint(1, 51, 25)
         print('Using ' + str(len(ns)) + ' random n`s from ' + str(min(ns)) +
               ' to ' + str(max(ns)) + ':')
         print('Using ' + str(len(ks)) + ' random k`s from ' + str(min(ks)) +
               ' to ' + str(max(ks)) + ':')
-        lats = 20.0 * np.random.rand(10) - 10.0
-        thresh = 1e-6
-        for k in ks:
-            for n in ns:
-                for lat in lats:
-                    omega = _eval_omega(k, n, Earth)['Rossby']
-                    v_hat = _eval_field_amplitudes(lat, k, n, 1, 'v', 'Rossby',
+        lats = np.deg2rad(80.0 * np.random.rand(10) - 40.0)
+        print('Using ' + str(len(lats)) + ' random lats from ' +
+              str(round(min(lats), 2)) + ' to ' + str(round(max(lats), 2))
+              + ':')
+        waves = ['Rossby', 'EIG', 'WIG']
+        thresh = 1e-15
+        for wave in waves:
+            print('Testing ' + wave + ' wave_type:')
+            amp = random.uniform(np.log(1e-15), np.log(1e15))
+            amp = np.exp(amp)
+            # print("Sammy ate {0:.3f} percent of a pizza!".format(75.765367))
+            print('Using amplitude: {0:.2g}'.format(amp))
+            for k in ks:
+                for n in ns:
+                    omega = _eval_omega(k, n, Earth)[wave]
+                    v_hat = _eval_field_amplitudes(lats, k, n, amp, 'v', wave,
                                                    Earth)
-                    phi_hat = _eval_field_amplitudes(lat, k, n, 1, 'phi',
-                                                     'Rossby', Earth)
-                    u_hat = _eval_field_amplitudes(lat, k, n, 1, 'u', 'Rossby',
+                    phi_hat = _eval_field_amplitudes(lats, k, n, amp, 'phi',
+                                                     wave, Earth)
+                    u_hat = _eval_field_amplitudes(lats, k, n, amp, 'u', wave,
                                                    Earth)
-                    error = (-1j * omega * u_hat - 2 * OMEGA * np.sin(lat) *
-                             v_hat + 1j * k / (A * np.cos(lat)) * phi_hat)
-                    # print(np.real(error))
-                    self.assertLessEqual(abs(np.real(error)),
+                    error = (-1j * omega * u_hat - 2 * OMEGA * lats * v_hat +
+                             1j * k / (A) * phi_hat) / amp
+                    summed_error = sum(abs(np.real(error)))
+                    self.assertLessEqual(summed_error,
                                          thresh, 'Error should be' +
                                          ' smaller than ' + str(thresh))
+            print(' Test for ' + wave +
+                  ' done with threshold of ' + str(thresh))
+        print('_eval_meridional_velocity test for all wave types done' +
+              ' with threshold of ' + str(thresh))
+        print('')
 
     def test_eval_field(self):
-        """Testing eval_field in pymaws"""
+        """Testing eval_field in pymaws:
+           1)Sample 10 latitudes from -80 to 80 in radians.
+           2)Sample 1 radnom amplitude from 1e-15 to 1e15 uniformly.
+           3)pick lon1, lon2, time1 and time2 to be 1, 2, 1, 1.01 respectivly.
+           4)Run eval_field for v, u(two times) and phi(two lons).
+           5)The error term is ((u2 - u1) / (time2 - time1) - 2 * OMEGA * lats
+             * v1 + 1.0 / (A) * (phi2 - phi1) / (lon2 - lon1)) / amp
+           6)The summed error term is sum(abs(error from step 5))
+            """
         from pymaws import eval_field
         from pymaws import Earth
         from pymaws import _unpack_parameters
         import numpy as np
-        thresh = 1e-10
+        import random
+        print('Testing pymaws.eval_field: ')
+        thresh = 1e-5
         OMEGA = _unpack_parameters(Earth, 'angular_frequency')
         A = _unpack_parameters(Earth, 'mean_radius')
-        lat1 = np.deg2rad(15.0)
+        lats = np.deg2rad(80.0 * np.random.rand(10) - 40.0)
+        print('Using ' + str(len(lats)) + ' random lats from ' +
+              str(round(min(lats), 2)) + ' to ' + str(round(max(lats), 2))
+              + ':')
         lon1 = np.deg2rad(1.0)
         lon2 = np.deg2rad(2.0)
         time1 = 1.0
         time2 = 1.01
-        v1 = eval_field(lat1, lon1, time1, field='v')
-        u1 = eval_field(lat1, lon1, time1, field='u')
-        u2 = eval_field(lat1, lon1, time2, field='u')
-        phi1 = eval_field(lat1, lon1, time1, field='phi')
-        phi2 = eval_field(lat1, lon2, time1, field='phi')
-        error = (u2 - u1) / (time2 - time1) - 2 * OMEGA * np.sin(lat1) * \
-            v1 + 1 / (A * np.cos(lat1)) * (phi2 - phi1) / (lon2 - lon1)
-        self.assertLessEqual(abs(error),
+        amp = random.uniform(np.log(1e-15), np.log(1e15))
+        amp = np.exp(amp)
+        print('Using amplitude: {0:.2g}'.format(amp))
+        v1 = eval_field(lats, lon1, time1, field='v', amp=amp)
+        u1 = eval_field(lats, lon1, time1, field='u', amp=amp)
+        u2 = eval_field(lats, lon1, time2, field='u', amp=amp)
+        phi1 = eval_field(lats, lon1, time1, field='phi', amp=amp)
+        phi2 = eval_field(lats, lon2, time1, field='phi', amp=amp)
+        error = ((u2 - u1) / (time2 - time1) - 2 * OMEGA * lats *
+                 v1 + 1.0 / (A) * (phi2 - phi1) / (lon2 - lon1)) / amp
+        summed_error = sum(abs(error))
+        self.assertLessEqual(summed_error,
                              thresh, 'Error should be' +
                              ' smaller than ' + str(thresh))
+        print('')
 
 
 if __name__ == '__main__':
