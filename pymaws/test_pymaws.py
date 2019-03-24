@@ -259,11 +259,18 @@ class Test_pymaws(unittest.TestCase):
         amp = random.uniform(np.log(1e-15), np.log(1e15))
         amp = np.exp(amp)
         print('Using amplitude: {0:.2g}'.format(amp))
-        v1 = eval_field(lats, lon1, time1, field='v', amp=amp)
-        u1 = eval_field(lats, lon1, time1, field='u', amp=amp)
-        u2 = eval_field(lats, lon1, time2, field='u', amp=amp)
-        phi1 = eval_field(lats, lon1, time1, field='phi', amp=amp)
-        phi2 = eval_field(lats, lon2, time1, field='phi', amp=amp)
+        nj = lats.shape[0]
+        v1 = np.zeros((nj))
+        u1 = np.zeros((nj))
+        u2 = np.zeros((nj))
+        phi1 = np.zeros((nj))
+        phi2 = np.zeros((nj))
+        for j in range(nj):
+            v1[j] = eval_field(lats[j], lon1, time1, field='v', amp=amp)
+            u1[j] = eval_field(lats[j], lon1, time1, field='u', amp=amp)
+            u2[j] = eval_field(lats[j], lon1, time2, field='u', amp=amp)
+            phi1[j] = eval_field(lats[j], lon1, time1, field='phi', amp=amp)
+            phi2[j] = eval_field(lats[j], lon2, time1, field='phi', amp=amp)
         error = ((u2 - u1) / (time2 - time1) - 2 * OMEGA * lats *
                  v1 + 1.0 / (A) * (phi2 - phi1) / (lon2 - lon1)) / amp
         summed_error = sum(abs(error))
