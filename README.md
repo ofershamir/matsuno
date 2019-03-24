@@ -54,7 +54,11 @@ This package does not include visualizations of any kind, but you can use ``matp
     $ plt.contourf(np.rad2deg(lons), np.rad2deg(lats), v[0, :, :])
     $ plt.xlim(-36,36)
     $ plt.ylim(-30,30)
-![Meridional velocity at t=0](https://github.com/ofershamir/matsuno/master/example_v.png "Meridional velocity at t=0")	 
+    
+![Meridional velocity at t=0](https://github.com/ofershamir/matsuno/raw/master/example_v.png) 
+*Meridional velocity at t=0*
+
+
 
 ### Caveats
 

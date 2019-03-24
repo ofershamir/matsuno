@@ -92,7 +92,7 @@ def _eval_omega(k, n, parameters=Earth):
     G = _unpack_parameters(parameters, 'gravitational_acceleration')
     A = _unpack_parameters(parameters, 'mean_radius')
     H0 = _unpack_parameters(parameters, 'layer_mean_depth')
-    # evaluate Eq. (4) the text 
+    # evaluate Eq. (4) the text
     omegaj = np.zeros((1, 3))
     delta0 = 3. * (G * H0 * (k / A)**2 + 2. * OMEGA *
                    (G * H0)**0.5 / A * (2 * n + 1))
@@ -102,7 +102,7 @@ def _eval_omega(k, n, parameters=Earth):
         deltaj = (delta4**2 - 4. * delta0**3 + 0. * 1j)**0.5
         deltaj = (0.5 * (delta4 + deltaj))**(1. / 3.)
         deltaj = deltaj * np.exp(2. * np.pi * 1j * j / 3.)
-        # evaluate Eq. (3) the text 
+        # evaluate Eq. (3) the text
         omegaj[0, j - 1] = np.real(-1. / 3. * (deltaj + delta0 / deltaj))
     # put all wave-types in dict:
     # (Eq. (5) in the text)
@@ -337,7 +337,7 @@ def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
 
     """
     import numpy as np
-    
+
     # make sure lat, lon and time are scalars
     if not np.isscalar(lat):
         raise TypeError('lat must be scalar')
