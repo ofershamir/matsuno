@@ -55,7 +55,6 @@ This package does not include visualizations of any kind, but you can use ``matp
     $ plt.xlim(-36,36)
     $ plt.ylim(-30,30)
 ![Meridional velocity at t=0](https://github.com/ofershamir/matsuno/master/example_v.png "Meridional velocity at t=0")	 
-![Meridional velocity at t=0](https://github.com/ofershamir/matsuno/ofer/example_v.png "Meridional velocity at t=0")	 
 
 ### Caveats
 
