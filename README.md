@@ -1,5 +1,5 @@
 ## pymaws: Matsuno Analytical Wave Solution implemented in Python 
-An analytical solutions set for planetary and inertia gravity waves equations based on the work of [Matsuno(1966)](https://www.jstage.jst.go.jp/article/jmsj1965/44/1/44_1_25/_article). These solutions were succsesfully implemented on the [baroclinic wave test case](https://www.geosci-model-dev-discuss.net/gmd-2018-260/).
+A python module for evaluating the initial conditions used in: [The Matsuno baroclinic wave test case](https://www.geosci-model-dev-discuss.net/gmd-2018-260/) (under review for GEOSCI. MODEL DEV.).
 
 ### Installation
 
@@ -13,7 +13,7 @@ The package can be installed using ``pip``:
   	$ pip install pymaws
     
 ### Testing
-The testing procedure tests all the parts of pymaws and should  take anywhere from a few seconds upto 20 seconds due to random elements in the tests.
+The testing procedure tests all the parts of pymaws and should take anywhere from a few seconds upto 20 seconds due to random elements in the tests.
 To run the tests, use python3 in the command line:
 
 	$ python test_pymaws.py
@@ -30,19 +30,31 @@ The main function ``eval_field`` was loaded to your environment and a dictionary
 Let's begin with a regular grid of lat/lon on a 20 second time interval:
 
 	$ import numpy as np
-	$ lats = np.deg2rad(np.linspace(-80, 80, 100))
-	$ lons = np.deg2rad(np.linspace(0, 360, 200))
-	$ time = np.linspace(0.0, 20, 50)
-Now, lets evaluate the zonal wind velocity with EIG waves:
+	$ nlats = 100
+	$ nlons = 200
+	$ ntime = 50
+	$ lats = np.deg2rad(np.linspace(-80, 80, nlats))
+	$ lons = np.deg2rad(np.linspace(-180, 180, nlons))
+	$ time = np.linspace(0.0, 20, ntime)
+Now, let's evaluate the meridional velocity field of an Eastward propagating Inertia-Gravity (EIG) wave:
 
-	$ u = eval_field(lats, lons, time, field='u', wave_type='EIG')
-``eval_field`` returns a numpy array with the shape ``(time, lons, lats)``:
+    $ v = np.zeros((ntime, nlats, nlons))
+    $ for t in range(ntime):
+    $     for j in range(nlats):
+    $         for i in range(nlons):
+    $             v[t, j, i] = eval_field(lats[j], lons[i], time[t], 
+    $                                           field='v', wave_type='EIG')
 
-	$ u.shape
+	$ v.shape
 	$ (50, 200, 100)
 Note that the default arguments of ``eval_field`` are ``n=1, k=5, amp=1e-5, wave_type='Rossby'`` and ``parameters=Earth``. 
-This package does not include visualizations of any kind, but you can use ``matplotlib`` or save the numpy array to file and load it on ``MATLAB``.
-	 
+This package does not include visualizations of any kind, but you can use ``matplotlib``, e.g.
+
+    $ from matplotlib import pyplot as plt
+    $ plt.contourf(np.rad2deg(lons), np.rad2deg(lats), v[0, :, :])
+    $ plt.xlim(-36,36)
+    $ plt.ylim(-30,30)
+![Meridional velocity at t=0](https://github.com/ofershamir/matsuno/master/example_v.png "Meridional velocity at t=0")	 
 
 ### Caveats
 
