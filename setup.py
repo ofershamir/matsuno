@@ -5,19 +5,24 @@ Created on Thu Mar 14 17:02:46 2019
 
 @author: shlomi
 """
-from distutils.core import setup
+import setuptools
 
-setup(
-    name='pymaws',
-    packages=['pymaws'],
-    version='0.1.0',  # Ideally should be same as your GitHub release tag varsion
-    description='Matsuno Analytical Wave Solution implemented in Python',
-    author='Ofer Shamir',
-    author_email='ofer.shamir@mail.huji.ac.il',
-    url='https://github.com/ofershamir/matsuno',
-    download_url='https://github.com/ofershamir/matsuno/archive/v0.1.0.tar.gz',
-    keywords=['matsuno', 'gravity-inertia-waves'],
-    classifiers=["Programming Language :: Python :: 3",
-                 "License :: OSI Approved :: MIT License",
-                 "Operating System :: OS Independent"],
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="pymaws",
+    version="0.1.0",
+    author="Ofer Shamir",
+    author_email="ofer.shamir@mail.huji.ac.il",
+    description="Matsuno Analytical Wave Solution implemented in Python",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/ofershamir/matsuno",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 )
