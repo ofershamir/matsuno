@@ -43,8 +43,8 @@ def _unpack_parameters(parameters, key):
 
 def _eval_omega(k, n, parameters=Earth):
     """
-    Evaluates the wave-frequency for a given wave number and wave mode.
-    For further details see eq. 2 in  https://doi.org/10.5194/gmd-2018-260
+    Evaluates the wave-frequencies for a given wave-number and wave-mode.
+    For further details see Eqs. (2)-(5) in  the text
 
     Parameters
     ----------
@@ -63,7 +63,7 @@ def _eval_omega(k, n, parameters=Earth):
     Returns
     -------
     omega : Float, dict
-            wave frequency in 1/sec for each wave-type(Rossby, EIG, WIG)
+            wave frequency in rad/sec for each wave-type(Rossby, EIG, WIG)
 
     Notes
     -----
@@ -92,7 +92,7 @@ def _eval_omega(k, n, parameters=Earth):
     G = _unpack_parameters(parameters, 'gravitational_acceleration')
     A = _unpack_parameters(parameters, 'mean_radius')
     H0 = _unpack_parameters(parameters, 'layer_mean_depth')
-    # evaluate eq. 4 in https://doi.org/10.5194/gmd-2018-260:
+    # evaluate Eq. (4) the text 
     omegaj = np.zeros((1, 3))
     delta0 = 3. * (G * H0 * (k / A)**2 + 2. * OMEGA *
                    (G * H0)**0.5 / A * (2 * n + 1))
@@ -102,9 +102,10 @@ def _eval_omega(k, n, parameters=Earth):
         deltaj = (delta4**2 - 4. * delta0**3 + 0. * 1j)**0.5
         deltaj = (0.5 * (delta4 + deltaj))**(1. / 3.)
         deltaj = deltaj * np.exp(2. * np.pi * 1j * j / 3.)
+        # evaluate Eq. (3) the text 
         omegaj[0, j - 1] = np.real(-1. / 3. * (deltaj + delta0 / deltaj))
     # put all wave-types in dict:
-    # (eq. 5 in https://doi.org/10.5194/gmd-2018-260)
+    # (Eq. (5) in the text)
     omega = {'Rossby': -np.min(np.abs(omegaj)),
              'WIG': np.min(omegaj),
              'EIG': np.max(omegaj)}
@@ -114,8 +115,8 @@ def _eval_omega(k, n, parameters=Earth):
 def _eval_hermite_polynomial(x, n):
     """
     Evaluates the normalized Hermite polynomial of degree n at point/s x
-    using the three-term recurrence relation. For further details see eq. 7 in
-    https://doi.org/10.5194/gmd-2018-260
+    using the three-term recurrence relation. For further details see Eq. (7)
+    in the text.
 
     Parameters
     ----------
@@ -157,7 +158,7 @@ def _eval_hermite_polynomial(x, n):
 def _eval_meridional_velocity(lat, Lamb, n=1, amp=1e-5):
     """
     Evaluates the meridional velocity amplitude at a given latitude point and
-    a given wave-amplitude. Eq. 6a in  https://doi.org/10.5194/gmd-2018-260
+    a given wave-amplitude. See Eq.(6a) in the text.
 
     Parameters
     ----------
@@ -261,10 +262,10 @@ def _eval_field_amplitudes(lat, k=5, n=1, amp=1e-5, field='v',
     # evaluate functions for u and phi:
     v_hat_plus_1 = _eval_meridional_velocity(lat, Lamb, n + 1, amp)
     v_hat_minus_1 = _eval_meridional_velocity(lat, Lamb, n - 1, amp)
-    # Eq. 6a in https://doi.org/10.5194/gmd-2018-260
+    # Eq. (6a) in the text
     if field == 'v':
         return v_hat
-    # Eq. 6b in https://doi.org/10.5194/gmd-2018-260
+    # Eq. (6b) in the text
     elif field == 'u':
         u_hat = (- ((n + 1) / 2.0)**0.5 * (omega / (G * H0)**0.5 + k / A) *
                  v_hat_plus_1 - ((n) / 2.0)**0.5 * (omega / (G * H0)**0.5 -
@@ -273,7 +274,7 @@ def _eval_field_amplitudes(lat, k=5, n=1, amp=1e-5, field='v',
         u_hat = G * H0 * Lamb**0.25 / \
             (1j * A * (omega**2 - G * H0 * (k / A)**2)) * u_hat
         return u_hat
-    # Eq. 6c in https://doi.org/10.5194/gmd-2018-260
+    # Eq. (6c) in the text
     elif field == 'phi':
         p_hat = (- ((n + 1) / 2.0)**0.5 * (omega + (G * H0)**0.5 * k / A) *
                  v_hat_plus_1 + ((n) / 2.0)**0.5 * (omega - (G * H0)**0.5 *
@@ -289,18 +290,16 @@ def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
                wave_type='Rossby', parameters=Earth):
     """
     Evaluates the analytic solutions of either the zonal or meridional velocity
-    or the geopotential height on an arbitrary lat x lon grids at times
-    time.
+    or the geopotential height on at given latitude, longitude and time.
 
     Parameters
     ----------
-    lat : Float, array_like or scalar
+    lat : Float, scalar
           latitude(radians)
-    lon : Float, array_like or scalar
+    lon : Float, scalar
           longitude(radians)
-    time : Float, array_like or scaler
-           time(sec), should be scalar and =0 if one wants only initial
-           conditions.
+    time : Float, scaler
+           time(sec), =0 if one wants initial conditions.
     k : Integer, scalar
         spherical wave-number (dimensionless)
         Default : 5
@@ -326,7 +325,7 @@ def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
         Defualt: Earth's parameters defined above
     Returns
     -------
-    f : Float, 3D numpy array (time, lon, lat)
+    f : Float, scalar
         Evaluation of the the zonal velocity(m/sec),
         or meridional velocity(m/sec) or the geopotential height(m^2/sec^2)
         respectivly.
@@ -338,24 +337,14 @@ def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
 
     """
     import numpy as np
-    # check for ndim :
-    lat = np.atleast_1d(lat)
-    lon = np.atleast_1d(lon)
-    time = np.atleast_1d(time)
-
-    if lat.ndim > 1:
-        raise ValueError('lat must be 1D array or scalar only!')
-    if lon.ndim > 1:
-        raise ValueError('lon must be 1D array or scalar only!')
-    if time.ndim > 1:
-        raise ValueError('time must be 1D array or scalar only!')
-    # number of grid points
-    nj = lat.shape[0]
-    ni = lon.shape[0]
-    nt = time.shape[0]
-
-    # preallocate
-    f = np.zeros((nt, ni, nj))
+    
+    # make sure lat, lon and time are scalars
+    if not np.isscalar(lat):
+        raise TypeError('lat must be scalar')
+    if not np.isscalar(lon):
+        raise TypeError('lon must be scalar')
+    if not np.isscalar(time):
+        raise TypeError('time must be scalar')
 
     # frequency
     all_omegas = _eval_omega(k, n, parameters)
@@ -375,8 +364,6 @@ def eval_field(lat, lon, time, k=5, n=1, amp=1e-5, field='phi',
                                        parameters)
 
     # adding time and longitude dependence
-    for t in range(nt):
-        f[t, :, :] = np.real(
-            np.outer(np.exp(1j * (k * lon - omega * time[t])), f_hat))
-    f = f.squeeze()
+    f = np.real(np.exp(1j * (k * lon - omega * time)) * f_hat)
+
     return f
