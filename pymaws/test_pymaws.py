@@ -107,9 +107,9 @@ class Test_pymaws(unittest.TestCase):
         thresh = 1e-18
         for k in ks:
             for n in ns:
-                coeffs = [-1, 0, (G * H0) * (k/A)**2 + 2 * OMEGA * (2 * n + 1)
-                          * (G * H0)**0.5 / A, (2 * OMEGA * G * H0 * k / A)
-                          / A]
+                coeffs = [-1, 0, (G * H0) * (k / A)**2 + 2 * OMEGA *
+                          (2 * n + 1) * (G * H0)**0.5 / A, (2 * OMEGA * G *
+                          H0 * k / A) / A]
                 roots = np.roots(coeffs)
                 test.update(Rossby=-min(abs(roots)), WIG=min(roots),
                             EIG=max(roots))
@@ -119,8 +119,9 @@ class Test_pymaws(unittest.TestCase):
                 self.assertLessEqual(sum([abs(x) for x in error.values()]),
                                      thresh, 'Error should be' +
                                      ' smaller than ' + str(thresh))
-                self.assertLessEqual(totest_sum, thresh, 'Sum of all 3 roots '
-                                     + 'should be smaller than ' + str(thresh))
+                self.assertLessEqual(totest_sum, thresh,
+                                     'Sum of all 3 roots ' +
+                                     'should be smaller than ' + str(thresh))
         print('_eval_omega test complete with threshold of ' + str(thresh))
         print('')
 
@@ -162,8 +163,8 @@ class Test_pymaws(unittest.TestCase):
         v_5 = _eval_meridional_velocity(lats, Lamb, n=5, amp=amp)
         error = np.trapz(v_10 * v_5, lats) * Lamb**0.25 / (amp**2)
         one = np.trapz(v_10 * v_10, lats) * Lamb**0.25 / (amp**2)
-        self.assertLessEqual(error, thresh, 'Error should be'
-                             + ' smaller than ' + str(thresh))
+        self.assertLessEqual(error, thresh, 'Error should be' +
+                             ' smaller than ' + str(thresh))
         self.assertAlmostEqual(one, 1.0, 7)
         print('_eval_meridional_velocity test complete with threshold of ' +
               str(thresh))
@@ -198,8 +199,8 @@ class Test_pymaws(unittest.TestCase):
               ' to ' + str(max(ks)) + ':')
         lats = np.deg2rad(80.0 * np.random.rand(10) - 40.0)
         print('Using ' + str(len(lats)) + ' random lats from ' +
-              str(round(min(lats), 2)) + ' to ' + str(round(max(lats), 2))
-              + ':')
+              str(round(min(lats), 2)) + ' to ' + str(round(max(lats), 2)) +
+              ':')
         waves = ['Rossby', 'EIG', 'WIG']
         thresh = 1e-15
         for wave in waves:
@@ -250,8 +251,8 @@ class Test_pymaws(unittest.TestCase):
         A = _unpack_parameters(Earth, 'mean_radius')
         lats = np.deg2rad(80.0 * np.random.rand(10) - 40.0)
         print('Using ' + str(len(lats)) + ' random lats from ' +
-              str(round(min(lats), 2)) + ' to ' + str(round(max(lats), 2))
-              + ':')
+              str(round(min(lats), 2)) + ' to ' + str(round(max(lats), 2)) +
+              ':')
         lon1 = np.deg2rad(1.0)
         lon2 = np.deg2rad(2.0)
         time1 = 1.0
