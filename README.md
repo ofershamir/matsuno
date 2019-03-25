@@ -46,7 +46,7 @@ Now, let's evaluate the meridional velocity field of an Eastward propagating Ine
     $                                           field='v', wave_type='EIG')
 
 	$ v.shape
-	$ (50, 200, 100)
+	$ (50, 100, 200)
 Note that the default arguments of ``eval_field`` are ``n=1, k=5, amp=1e-5, wave_type='Rossby'`` and ``parameters=Earth``. 
 This package does not include visualizations of any kind, but you can use ``matplotlib``, e.g.
 
