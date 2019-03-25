@@ -80,6 +80,9 @@ When you run ``eval_field``, remember to use the argument ``parameters=Earth_1``
 
 If you use pymaws in your academic work and publish a paper, we kindly ask that you cite pymaws using the following DOI:
 
+[![DOI](https://zenodo.org/badge/175410797.svg)](https://zenodo.org/badge/latestdoi/175410797)
+
+
 ### License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
